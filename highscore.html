@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
+</head>
+<body>
+
+    <table id="table1">
+        <thead>
+            <tr>
+                <th>data</th>
+                <th>data2</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <form>
+        Test Input:<br>
+        <input type="text" id="test-input">
+        Test Score:<br>
+        <input type="text" id="test-score">
+        <br>
+        <input type="submit" value="Test" id="test-fb">
+        <br><br>
+        Username:<br>
+        <input type="text" id="login-username">
+        <br>
+        Password:<br>
+        <input type="text" id="login-password">
+        <br><br>
+        <input type="submit" value="Login" id="login-fb">
+        <input type="submit" value="Create Account" id="create-account-fb">
+        <input type="submit" value="Logout" id="logout-fb">
+    </form> 
+
+    <script>
+
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyB6qNaVWSr2BrEKebnL9W-2q3xcfsZxU8k",
+            authDomain: "minesweeper-high-scores.firebaseapp.com",
+            databaseURL: "https://minesweeper-high-scores.firebaseio.com",
+            projectId: "minesweeper-high-scores",
+            storageBucket: "minesweeper-high-scores.appspot.com",
+            messagingSenderId: "124529368660"
+        };
+
+        firebase.initializeApp(config);
+
+        // make vars for the database and the nodes the data will be stored in
+        var database = firebase.database();
+        var databaseRef = database.ref();
+        var userInfo;
+        var userLoginID;
+
+        // Have user log in, PLEASE NOTE!!! There is a bug in Chrome where you will get an error message that says:
+        // "The 'Access-Control-Allow-Origin' header has a value 'null' that is not equal to the supplied origin. Origin 'null' is therefore not allowed access."
+        // it will work fine on other browsers
+        $("#login-fb").on("click", (event) => {
+            event.preventDefault();
+
+            var email = $("#login-username").val().trim();
+            var pass = $("#login-password").val().trim();
+            var auth = firebase.auth();
+
+            var loginPromise = auth.signInWithEmailAndPassword(email, pass);
+            loginPromise.catch( e => console.log(e.message));
+        });
+
+        // Have user create account, PLEASE NOTE!!! There is a bug in Chrome where you will get an error message that says:
+        // "The 'Access-Control-Allow-Origin' header has a value 'null' that is not equal to the supplied origin. Origin 'null' is therefore not allowed access."
+        // the user data will still be added to the database and it will work fine on other browsers
+        $("#create-account-fb").on("click", (event) => {
+            event.preventDefault();
+
+            var email = $("#login-username").val().trim();
+            var pass = $("#login-password").val().trim();
+            var auth = firebase.auth();
+
+            var loginPromise = auth.createUserWithEmailAndPassword(email, pass);
+            loginPromise.catch( e => console.log(e.message));
+        });
+
+        // Logs user out
+        $("#logout-fb").on("click", (event) => {
+            event.preventDefault();
+            firebase.auth().signOut();
+        });
+
+        // Listens for user login and returns the user information as a object
+        firebase.auth().onAuthStateChanged(firebaseUser => { 
+            if(firebaseUser) {
+                console.log("Logged In Successfully");
+                console.log(firebaseUser);
+                // grabs the user info on sign in and gets the user's username from the JSON
+                userInfo = firebaseUser;
+                userLoginID = userInfo.uid;
+                console.log(userLoginID);
+
+                // TODO: add logic to show logout btn
+            } else {
+                console.log("Not Logged In");
+                // TODO: add logic to hide logout btn
+            }
+        });
+
+        // grabs test data that the user puts in the database
+        $("#test-fb").on("click", (event) => {
+            event.preventDefault();
+
+            // grab user input data. Firebase stores data as a string by default so the score needs to be inside a parseInt to store as a number
+            var testInput = $("#test-input").val();
+            var testScore = parseInt($("#test-score").val());
+
+            // put user input in object then push it to the database
+            var newTest = {
+                new_test: testInput,
+                high_score: testScore
+            }; 
+            
+            // push data to the database
+            database.ref(userLoginID).update(newTest);
+            
+            // clear text boxes
+             $("#test-input").val("");
+        });
+
+        // .SET WILL OVERWRITE WHAT IS IN THE DATABASE, .UPDATE WILL ONLY EFFECT WHAT CHANGES, AND .PUSH WILL ADD THE DATA TO 
+        // A LIST AND GIVE IT A KEY
+        // MAYBE TRY USEING FIREBASE.REF(%USER-ID%) WHEN PUSHING EACH USER'S INFO THEN USE .UPDATE TO UPDATE THEIR HIGH SCORE, BUT FIST
+        // PULL DOWN THEIR CURRENT SCORE TO COMPAIRE IT WITH WHAT THEY GOT
+
+        databaseRef.orderByChild("high_score").on("child_added", (childSnapshot, prevChildKey) => {
+
+            // grab all the user information currently in firebase
+            var testInputData = childSnapshot.val().new_test; 
+            var testScoreData = childSnapshot.val().high_score; 
+
+            // write data to the table
+            $("#table1 > tbody").append("<tr><td>" + testInputData + "</td><td>" + testScoreData + "</td></tr>");
+        });
+
+    </script>
+
+</body>
+</html>

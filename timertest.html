@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+</head>
+<body>
+    
+<script>
+var seconds = 120;
+
+function startGameTimer () {
+    
+    interval = setTimeout(startGameTimer, 1000);
+    seconds--;
+    console.log("Time Remaining: " + fancyTimeFormat(seconds));
+
+    if (seconds === 0) {    
+        clearTimeout(interval);
+        console.log("Game Over!");
+    }   
+}
+startGameTimer();
+
+
+function fancyTimeFormat(time)
+{   
+    // Hours, minutes and seconds
+    var hrs = ~~(time / 3600);
+    var mins = ~~((time % 3600) / 60);
+    var secs = time % 60;
+
+    // Output like "1:01" or "4:03:59" or "123:03:59"
+    var ret = "";
+
+    if (hrs > 0) {
+        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+    }
+
+    ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+    ret += "" + secs;
+    return ret;
+}
+
+</script>    
+
+</body>
+</html>
